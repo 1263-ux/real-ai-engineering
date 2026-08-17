@@ -1,0 +1,56 @@
+{
+  "SchemaVersion": 1,
+  "CommandTimeoutSeconds": 20,
+  "Commands": [
+    { "Name": "java", "Arguments": ["-version"], "Critical": true },
+    { "Name": "node", "Arguments": ["--version"], "Critical": true },
+    { "Name": "python", "Arguments": ["--version"], "Critical": true },
+    { "Name": "git", "Arguments": ["--version"], "Critical": true },
+    { "Name": "docker", "Arguments": ["--version"], "Critical": true },
+    { "Name": "wsl", "Arguments": ["--status"], "Critical": true },
+    { "Name": "mvn", "Arguments": ["-version"], "Critical": false },
+    { "Name": "npm", "Arguments": ["--version"], "Critical": false },
+    { "Name": "pnpm", "Arguments": ["--version"], "Critical": false },
+    { "Name": "pip", "Arguments": ["--version"], "Critical": false },
+    { "Name": "uv", "Arguments": ["--version"], "Critical": false }
+  ],
+  "CacheChecks": [
+    { "Name": "npm", "Command": "npm", "Arguments": ["config", "get", "cache"], "ExpectedPath": "<data-drive>\\NodeCache\\npm" },
+    { "Name": "pnpm", "Command": "pnpm", "Arguments": ["store", "path"], "ExpectedPath": "<data-drive>\\NodeCache\\pnpm-store" },
+    { "Name": "uv", "Command": "uv", "Arguments": ["cache", "dir"], "ExpectedPath": "<data-drive>\\UvCache" },
+    { "Name": "pip", "Command": "pip", "Arguments": ["cache", "dir"], "ExpectedPath": "<data-drive>\\pip-cache" }
+  ],
+  "ScanRoots": {
+    "VirtualMachineRoot": "<vm-root>",
+    "DockerComposeRoots": ["<docker-root-1>", "<docker-root-2>"],
+    "InstallerRoot": "<installer-root>"
+  },
+  "CriticalPaths": [
+    "<management-root>",
+    "<project-root>",
+    "<user-data-dir>",
+    "<docker-desktop-wsl-dir>",
+    "<wsl-root>",
+    "<vm-root>"
+  ],
+  "VirtualDiskPaths": [
+    "<docker-data-vhdx>",
+    "<wsl-distro-vhdx>"
+  ],
+  "UserEntries": [
+    "<app-exe>",
+    "<user-profile>\\Desktop\\<app>.lnk"
+  ],
+  "RecoveryDocuments": [
+    "<management-root>\\07-备份与恢复\\恢复说明.md"
+  ],
+  "NoiseEvents": [
+    { "Provider": "Microsoft-Windows-DistributedCOM", "Id": 10010 }
+  ],
+  "Retention": {
+    "weekly": 12,
+    "monthly": 12,
+    "quarterly": 8,
+    "yearly": 0
+  }
+}

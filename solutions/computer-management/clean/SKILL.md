@@ -30,8 +30,19 @@ Never optimize for a tidy root directory at the expense of working software.
 - Do not delete duplicates until hashes, versions, use, and rollback needs are known.
 - Do not change a system-wide path when a user-level override or application-native repair is sufficient.
 - Preserve unrelated user changes and dirty worktrees.
+- Do not double-count junction aliases when summing sizes (`Application Data`→`AppData\Roaming`, `Local Settings`→`AppData\Local`, `My Documents`→`Documents`). Use robocopy `/XJ` and skip known aliases.
+- Measured space ≠ complete space. Unmeasurable directories must be reported as `unmeasured`, never guessed into a specific recoverable item; verify with the real command (`vssadmin list shadowstorage`, `Dism /AnalyzeComponentStore`) before attributing any gap.
 
 Read [references/risk-model.md](references/risk-model.md) before proposing any move, deletion, registry change, or virtualization action.
+
+## Cleanup channels
+
+Every removal belongs to exactly one channel; do not cross them:
+
+- **Script-safe**: orphan caches confirmed by `cache dir` / `store path` pointing elsewhere, and user `Temp` files not in use. A script may delete these.
+- **App-owned**: browser cache (browser's Clear browsing data), IDE cache (Invalidate Caches). Never script-delete; use the app's own UI.
+- **System mechanism**: `Temp` via `cleanmgr`/Storage Sense; WinSxS via `Dism /StartComponentCleanup` (never `/ResetBase`); restore points via System Protection / `vssadmin`.
+- **Review-first**: Recycle Bin (list then confirm), model/browser-runner caches (re-download cost), chat-file folders (data loss). Never auto-empty.
 
 ## Phase 0: define the contract
 
@@ -61,6 +72,7 @@ Also inspect when relevant:
 - VMware inventory and disk locations.
 - Dependency cache locations for npm, pnpm, uv, pip, Maven, Gradle, Volta, Cargo, Go, NuGet, and similar tools.
 - Existing cleanup scripts, logs, backups, and incomplete operations.
+- When the question is `what is eating space`, run `scripts/Measure-DirSizes.ps1` (junction-excluded) rather than a naive recursive sum.
 
 If a prior cleanup failed, read its logs before touching the affected application.
 
@@ -181,5 +193,8 @@ Resume only after narrowing the cause and updating the plan.
 
 ## Periodic maintenance
 
-Automate inventory, scoring, and report updates. Do not automate destructive cleanup. Use the weights in [references/risk-model.md](references/risk-model.md), retain recent reports, and present stale candidates for approval.
+Use `scripts/Invoke-ComputerInspection.ps1` as the single periodic entry point with `weekly`, `monthly`, `quarterly`, and `yearly` modes. The automation may read system, application, configuration, and user-data state, but may only write inspection reports, raw JSON, the periodic index, and verified maintenance-state documents. Weekly runs never update the long-term state document.
 
+Report only `正常`, `需注意`, `需处理`, or `检查未完成`; do not expose a score or dashboard. Keep the risk model as an internal safety guard. Treat command timeouts, permission failures, stopped Docker/WSL/VMware workloads, and unconfirmed cache paths as unverified rather than failed. Cursor CLI is optional: validate its installation path, shortcut, or user entry instead.
+
+Never automate deletion, movement, cleanup, repair, configuration changes, elevation, software lifecycle actions, or virtualization start/stop. Retain recent reports and present stale candidates for explicit user approval.
