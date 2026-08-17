@@ -1,5 +1,9 @@
 # dev-loop
 
+<p align="center">
+  <img src="logo.jpg" alt="dev-loop" width="260" />
+</p>
+
 面向真实开发迭代的 AI 开发循环。
 
 - **Problem**：多 Agent 协作反复出现「自我审批」「聊天上下文越滚越偏」「无限互审打补丁」——因为把角色写死，却没写清迭代规律。

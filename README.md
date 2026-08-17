@@ -1,5 +1,9 @@
 # real-ai-engineering
 
+<p align="center">
+  <img src="assets/logo.jpg" alt="real-ai-engineering" width="360" />
+</p>
+
 从真实 AI 开发问题里沉淀出来的可复用工程资产：Skills、Adapters、Scripts、Cases。
 
 > **Problem first, artifact second** —— 没有真实问题，不产生资产；没有真实验证，不包装成熟。
