@@ -1,0 +1,4 @@
+# 每项目的运行时状态（dev-loop 的 .agent/ 等）
+.agent/
+*.tmp
+*.bak

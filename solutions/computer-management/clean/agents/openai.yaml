@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clean"
+  short_description: "Safely audit, plan, organize, repair, and document a Windows data drive with staged verification."
+  default_prompt: "Use $clean to audit and safely organize my Windows D drive with backups, staged changes, and verification."
