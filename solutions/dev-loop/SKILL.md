@@ -172,16 +172,18 @@ Expert { capability, invocation, input_contract, output_contract }
 | 模型 | 能力档 | 成本档 | 调用 | 角色 |
 |---|---|---|---|---|
 | Codex Pro（CLI） | 高 | 订阅已付（边际≈0） | 自动 | **主力**：普通实现 / 重度活 |
-| DeepSeek API | 中 | 按量 | 自动 | 编排 / 轻活 / 兜底 |
-| Codex 网页版 | 高 | 订阅内 | 网页手动 | 高判断 review（独立检查） |
-| 智谱 API（GLM-4.5-Air / GLM-4.1-Thinking） | 中-高 | 白嫖额度 | 自动 | 高判断节点优先（4.1-Thinking 复杂推理 / 4.5-Air 日常检查） |
+| GPT 中转站（openai-completions：gpt-5.6 / gpt-5.6-sol / gpt-5.6-terra / codex-auto-review / gpt-5.5 / gpt-5.4 / gpt-image-2） | 高 | **便宜：官方倍率 0.06，预算按 0.1 计** | API 自动 | **DSH 执行主力 + 独立检查（codex-auto-review）+ 自动高判断** |
+| DeepSeek API | 中 | 按量（**现相对贵**） | 自动 | 兜底（贵，少用） |
+| Codex 网页版 | 高 | 订阅内 | 网页手动 | 高判断 review（手动独立检查） |
+| 智谱 API（GLM-4.5-Air / GLM-4.1-Thinking） | 中-高 | 白嫖额度 | 自动 | 高判断优先（免费，先白嫖） |
 | 便宜低端 API key | 低 | 极便宜 | 自动 | token 重活（扫描 / 批量生成） |
-| DSH（当前 Harness） | — | 按量 | 编排 | **只编排，不默认全包执行** |
+| DSH（当前 Harness） | — | 按量 | 编排 | **只编排；编排 token 优先走便宜档** |
 
 路由规则：
 
 - token 重活（扫描 / 批量 / 改写）→ 便宜低端档。
 - 普通实现 / 重度活 → **主力 Codex Pro**（订阅已付，重度用最省）。
-- 高判断节点（G1 前方向 / 发布 / RC review / 安全）→ **白嫖额度（智谱）优先 → 订阅内（Codex 网页版）**，不额外花钱。
-- 独立检查 → 默认便宜 / 白嫖档；只有检查发现问题或方案高危才升级稀缺专家（需 G3）。
-- DSH 只编排、播种工件、跑门禁；不默认把主力活烧在按量 API 上。
+- DSH 执行与编排 token → **中转站 GPT 优先**（比 deepseek 便宜）；deepseek 仅兜底。
+- 高判断节点（G1 前方向 / 发布 / RC review / 安全）→ **白嫖额度（智谱）优先 → 中转站高能力（gpt-5.6-terra）→ 订阅内（Codex 网页版）**，不额外花钱。
+- 独立检查 → **codex-auto-review（中转站，便宜）** 或 智谱白嫖；默认便宜/免费档，只有检查发现问题或方案高危才升级稀缺专家（需 G3）。
+- DSH 只编排、播种工件、跑门禁；不默认把主力活烧在贵的按量 API 上。
