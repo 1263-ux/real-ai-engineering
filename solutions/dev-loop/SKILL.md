@@ -18,11 +18,24 @@ description: >-
 ## 核心思想（6 条，不随模型变化）
 
 1. **人是 Owner，不是调度器** — 人决定：要什么 / 方案能不能接受 / 风险值不值 / 要不要继续 / 最终体验行不行。人**不**决定：用哪个模型、哪个 Provider、哪条 Pipeline、下一步跑什么命令。
-2. **实现者不能证明自己正确** — 实现者不审批自己的实现。简单任务「测试 + 用户验收」即够；高风险才升级独立 Expert。
+2. **实现者不能证明自己正确** — 实现者不审批自己的实现。简单任务「测试 + 用户验收」即够；高风险必须升级独立 Expert（至少一次，自审不计数）。
 3. **跨角色交接以工件为准，不转交长聊天** — 交接 bounded artifact（Goal / Constraints / PLAN / Diff / Test Result / Blocker），不交接几十轮聊天；独立 Expert 默认 fresh context，同一 Executor 可保留当前任务上下文。
 4. **证据高于模型共识** — 真实试用/运行 > 测试结果 > Diff/源码 > 明确工件 > Agent 判断 > Agent 共识。三票赞成没有测试通过值钱，不搞投票。
 5. **每一轮必须知道「为什么回去」** — 失败必须分类路由（见 Failure Routing），禁止无差别「再改一次」。
 6. **够用即停** — required evidence 满足即停止升级 Provider、重复抓取和额外审计，防止膨胀成「多方会审 2.0」。
+
+## 触发条件（什么时候必须装载本 Skill）
+
+目标包含以下任一项 → 第一步必须装载本 Skill（`skill dev-loop`）并播种
+`.agent/CURRENT_STATE`（一句话即可：当前状态 + 下一步）：
+
+- 多文件改动 / 跨文件重构
+- 多步骤 git 操作 / 分支 / PR / 发布 / review / 同步
+- 工具链 / 运行时 / 环境迁移（node / npm / 代理 / 服务切换等）
+- 任何完成后需要他人验收、或跨会话继续的结果
+
+不满足上述条件的单步任务（查询 / 单文件小改 / 一次性命令）可不装载，
+但完成后在会话里留一行结论（最小 RESULT：结论 + 残留）。
 
 ## Constitution（十条，不可违反）
 
@@ -44,7 +57,9 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 异常：BLOCKED（等人/外部） / RETHINK（停止补丁，回根因）
 ```
 
-- 简单任务只在心里走状态，不产工件；复杂/高风险任务才落 `.agent/` 工件。
+- 工件门槛：**所有任务最低一句话级工件**。多步任务开始时播种 `.agent/CURRENT_STATE`
+  （最小一行：状态 + 下一步），每轮循环后更新；完成时留最小 `RESULT`（结论 + 残留）。
+  简单任务可在心里走状态，但至少留最小结论行；复杂/高风险任务仍落完整工件（DESIGN / PLAN / RESULT）。
 - 普通任务完全不展示状态；状态是 Agent 的工作模式，不是给用户看的仪表盘。
 
 ## Playbook（怎么选路）
@@ -53,8 +68,12 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 |---|---|---|
 | 简单（CRUD/文案/小 bug） | IMPLEMENT → VERIFY → 结果交付 → DONE | 无 |
 | 复杂（跨文件/有取舍） | DESIGN → PLAN → **G2** → IMPLEMENT → VERIFY → TRIAL → DONE | G2 |
-| 高风险（认证/DB/协议/重构/发布） | 复杂路径 + 独立 Expert 审查 | G2 + G3 |
+| 高风险（认证/DB/协议/重构/发布） | 复杂路径 + **必须至少一次**独立 Expert 审查 | G2 + G3 |
 | 架构级/方向拿不准 | DESIGN 先行 + Expert 审查 | G1 + G3 |
+| 运维/发布（git/PR/review/同步/网络排障/环境迁移） | PLAN(清单) → G2(大范围时) → 执行 → RESULT | 按需 |
+
+- 高风险任务的独立审查：实现者自审不得充当独立审查；审查须为独立上下文（EXPERT_PACKET → fresh context）。
+- 运维/发布类任务**不产 DESIGN、不形式化 AC**；PLAN 可以是清单级（改什么 / 顺序 / 回滚）；验证 = 真实运行结果 / diff / git 状态，不是 test/build。
 
 ## 阶段职责
 
@@ -73,9 +92,12 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 | Plan Failure | 计划漏了东西 / 顺序错 | PLAN |
 | Design Failure | 架构/方案假设错了 | DESIGN |
 | Requirement Failure | 目标/范围本身有问题 | 人工（Owner）重新判断 |
+| 环境/外部失败（网络/代理/第三方 500/认证/配额/服务抽风） | 独立计数，不进逻辑失败计数 | BLOCKED |
 | **RETHINK** | **同类失败连续 2 次** | 停止补丁 → 根因 → 重写 DESIGN/决策 |
 
 - 连续两次同类失败 = 强制 RETHINK，禁止继续打补丁（继承旧 Skill 的刹车）。
+- 环境/外部失败**不触发 RETHINK**；RETHINK 只针对 Implementation/Plan/Design/Requirement 逻辑失败。
+- 环境失败走固定排障序：查代理/端口/环境变量 → 换源/镜像 → 退避重试（设上限）→ 仍未解决则 BLOCKED 上报人工。
 - 回 DESIGN / 需求 = 变更必须记录（递增 `design_version`，旧 PLAN 立即作废）。
 - 回 PLAN / IMPLEMENT = 修复后补回归证据，不影响已冻结部分。
 
@@ -109,6 +131,7 @@ Expert { capability, invocation, input_contract, output_contract }
 
 - 新增 Expert = 填一行表格，**不新增流程、不新增状态、不新增工件类型**。
 - **默认一次任务最多一次稀缺 Expert 升级**，放在最可能改变结果的节点：架构不确定 → DESIGN/PLAN 时审；实现风险高但方案明确 → VERIFY 后 Review。只有出现新的高风险证据才追加第二次，**不默认前后双审**。
+- 高风险任务下限 = 至少一次独立 Expert；与上限（最多一次）共同构成稀缺额度的使用边界。
 
 ## 人类门禁（只有 4 个）
 
