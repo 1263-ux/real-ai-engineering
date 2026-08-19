@@ -73,9 +73,8 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 | 运维/发布（git/PR/review/同步/网络排障/环境迁移） | PLAN(清单) → G2(大范围时) → 执行 → RESULT | 按需 |
 
 - 高风险任务的独立检查：实现者自审不得充当独立检查；检查须为独立上下文（EXPERT_PACKET → fresh context）；默认用便宜/白嫖档模型（见资源组配），升级稀缺需 G3。
-- 跨层问题（插件 → 平台 → 运行时）先画链路再动代码：register → service → api expose → client scope → UI render；「注册」与「暴露」拆成独立验收点；链路假设先让独立审查验证（审查前置），再改。
-- 运维/发布类任务**不产 DESIGN、不形式化 AC**；PLAN 可以是清单级（改什么 / 顺序 / 回滚）；验证 = 真实运行结果 / diff / git 状态，不是 test/build。
-- 高危运维动作（重启生产服务 / 强杀进程 / 迁移数据 / 改平台产物）先写受控操作单：备份 → 命令 → 健康检查 → 验收命令 → 失败回滚路径；回滚预案未就绪前不执行。
+- 跨层故障按依赖链逐跳验证（register → service → api expose → client scope → UI）；独立检查前置仅适用于链路假设不确定、平台影响大或风险高的情况。
+- 运维/发布类任务**不产 DESIGN、不形式化 AC**；PLAN 可以是清单级；验证 = 真实运行结果 / diff / git 状态；高危动作须有验证与回退方案，或明确记录不可回退及其理由。详细操作清单见 DSH adapter reference。
 
 ## 阶段职责
 
@@ -100,7 +99,7 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 - 连续两次同类失败 = 强制 RETHINK，禁止继续打补丁（继承旧 Skill 的刹车）。
 - 环境/外部失败**不触发 RETHINK**；RETHINK 只针对 Implementation/Plan/Design/Requirement 逻辑失败。
 - 环境失败走固定排障序：查代理/端口/环境变量 → 换源/镜像 → 退避重试（设上限）→ 仍未解决则 BLOCKED 上报人工。
-- 已知环境陷阱：Windows 工具调用统一正斜杠路径（D:/… 而非 D:\…）——反斜杠在编组/JSON 链路会被吞，误报 ENOENT。
+- 已知环境陷阱见 adapter troubleshooting：JSON/编组路径出现 ENOENT 时，检查反斜杠转义；该调用边界需要时可用正斜杠。
 - 回 DESIGN / 需求 = 变更必须记录（递增 `design_version`，旧 PLAN 立即作废）。
 - 回 PLAN / IMPLEMENT = 修复后补回归证据，不影响已冻结部分。
 
@@ -119,7 +118,7 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 
 - `CURRENT_STATE`：每轮循环结束的压缩快照（≤200 字，模板见 templates/），新轮次从这里开始，旧聊天封存。
 - 位置：`<项目>/.agent/`（DESIGN.md / PLAN.md / STATUS.md / RESULT.md）；EXPERT_PACKET 按需生成。
-- PLAN 按边界拆子任务（host 注册 / client slot / API 暴露 / 运行态验证 / 回归），每项独立验收点；不揉成单一大任务。
+- PLAN 对风险点、所有权边界和可独立验证的边界做显式拆分；不要求所有任务套用固定子任务模板。
 
 ## Expert 规范（新增专家不新增流程）
 
@@ -145,7 +144,7 @@ Expert { capability, invocation, input_contract, output_contract }
 - **G4 真实体验** — 这个结果是不是你真正想要的？
 
 - G1–G3 是**显式门禁**；G4 是**最终接受原则**，不要求每次显式弹窗——简单任务交付后用户继续使用即视为验收；复杂/体验型任务才显式走 TRIAL/G4。
-- 范围扩张 = 重新过门禁：修复范围超出已批准目标（插件 → 平台/宿主 runtime、跨系统新增改动）时，必须递增 design_version、补 DESIGN/PLAN、重新 G1（方向）+ G2（执行）；已批准范围不默认推导到相邻系统。
+- 实质性范围扩张（显著扩大 blast radius / 权限边界 / 数据影响 / 发布范围）时，重新确认目标与执行风险（可复用 G1/G2）；不要求所有跨系统改动都重建全套工件。
 
 除此之外（修哪个 import / 跑哪个测试 / 用什么命令 / 怎么 fallback）一律不烦人。
 
@@ -156,7 +155,7 @@ Expert { capability, invocation, input_contract, output_contract }
 - 反幻觉触发器：模糊标识（"latest" / "约 55 个测试"）/ 历史产物复用 / 自写脚本冒充正式入口 / 绿色对勾掩盖 partial。
 - 冻结就是冻结：已通过且 FROZEN 的路径不重开、不重复全量验证（除非数据损坏、凭据泄漏、核心闭环失效）。
 - Bug ≠ 当前阻塞：先分类，非阻塞进 backlog，不移动已通过 Gate 的终点。
-- 安装态补丁（node_modules / 本地产物修改）必须标记为临时：为什么改 / 怎么验证 / 怎么回滚 / 如何上游化；禁止当长期修复。
+- 临时/安装态补丁（node_modules、本地产物修改）至少记录：临时原因 + 验证方式 + 回退或上游跟踪；禁止无记录地当长期修复。
 
 ## 机制层（portable policy ↔ runtime enforcement）
 

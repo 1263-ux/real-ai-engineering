@@ -25,14 +25,15 @@
 
 - **C7 中转站模型入表**：资源组配表新增「GPT 中转站（openai-completions）」——gpt-5.6 / gpt-5.6-sol / gpt-5.6-terra / codex-auto-review / gpt-5.5 / gpt-5.4 / gpt-image-2，能力档高，官方倍率 0.06（预算按 0.1 计）。DeepSeek 因相对变贵降为兜底；DSH 执行/编排 token 优先走中转站；独立检查默认 codex-auto-review（便宜档）。密钥不入库。
 
-### v3.3 增量（相对 v3.2.2，来自 dsh-oks 真实项目复盘）
+### v3.3 增量（相对 v3.2.2，dsh-oks 事故 → 独立审查收敛后冻结）
 
-- **门禁强化**：范围扩张（插件 → 平台/宿主 runtime、跨系统新增改动）= 递增 design_version + 补 DESIGN/PLAN + 重新 G1（方向）+ G2（执行）；已批准范围不默认推导到相邻系统。
-- **高危运维受控操作单**：重启生产服务 / 强杀进程 / 迁移数据 / 改平台产物，先写 备份 → 命令 → 健康检查 → 验收命令 → 失败回滚路径；回滚预案未就绪前不执行。
-- **跨层问题先画链路**：register → service → api expose → client scope → UI render；「注册」与「暴露」拆成独立验收点；链路假设先独立审查验证（审查前置），再动代码。
-- **安装态补丁标记临时**：node_modules / 本地产物修改必须写 为什么改 / 怎么验证 / 怎么回滚 / 如何上游化；禁止当长期修复。
-- **PLAN 拆边界**：跨系统任务按子任务拆分（host 注册 / client slot / API 暴露 / 运行态验证 / 回归），每项独立验收点；不揉成单一大任务。
-- **环境陷阱**：Windows 工具调用统一正斜杠路径（反斜杠在编组/JSON 链路被吞 → ENOENT 误报），归属 C3 环境失败类。
+> 初版六条经 fresh-context 独立审查判定为"把单次事故经验硬编码成全局强制流程"，按审查建议收敛后冻结：
+> 主 Skill 只留三类短原则；DSH 具体链路 / 操作单 / troubleshooting 下沉到 `adapters/dsh/` reference。
+
+- **原则 1 · 范围**：实质性范围扩张（显著扩大 blast radius / 权限边界 / 数据影响 / 发布范围）时，重新确认目标与执行风险（可复用 G1/G2）；不要求所有跨系统改动重建全套工件。
+- **原则 2 · 运维与临时补丁**：高危动作须有验证与回退，或明确记录不可回退及理由；临时/安装态补丁至少记录 临时原因 + 验证方式 + 回退或上游跟踪。
+- **原则 3 · 跨层**：跨层故障按依赖链逐跳验证；独立检查前置仅用于链路假设不确定、平台影响大或风险高的情况。
+- **下沉 reference**：`adapters/dsh/web-plugin-exposure-chain.md`（settings 暴露链路 checklist）、受控操作单、Windows 路径 ENOENT troubleshooting 存 reference，主 Skill 只引用。
 
 ### 冻结规则
 
