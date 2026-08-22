@@ -71,7 +71,7 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 
 ### 路径修饰器
 
-- **复杂跨文件/有取舍**：需要 DESIGN → PLAN → G2 → IMPLEMENT → VERIFY → TRIAL。
+- **复杂跨文件/有取舍**：需要 DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL；仅当复杂度同时扩大风险、权限、数据或发布范围时才加 G2。
 - **高风险**：认证、数据库、协议、权限、真实数据、服务重启、路径安全、发布包、外部发布、高风险重构；按“独立检查规则”判断，不叠加第二套完整流程。
 - **架构不确定**：DESIGN 先行，必要时 G1/G3。
 - **运维/发布**：PLAN 可为清单；验证以真实运行结果、diff、git 状态为准。
@@ -81,15 +81,16 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 ### 独立检查规则（唯一规范来源）
 
 - 目的：防止自审，不是制造流程税；必须 fresh context，默认便宜/白嫖模型，最多一次。
-- 触发：易泄露密钥或个人数据、改真实配置或数据、认证、数据库、协议、权限、服务重启、路径安全、发布包、外部发布、高风险重构、用户明确要求 review。
-- L0/L1 默认不拉 reviewer；L2/L3 按触发场景判断。测试与本地准备并行，不得阻塞 IMPLEMENT/本地 VERIFY。
-- 用户说“直接 PR / 继续 / 授权 / 快”时，停止可选 review、重复测试和低价值审计；但不能覆盖已发现的密钥/个人数据泄露、真实配置或数据损坏、权限越界、授权缺失等硬阻塞。
+- 时机：只在交付点拉 reviewer——完成一轮 dev-loop 交付时、PR/推送/发布前、用户明确要求；L0/L1 默认不拉，任务中途不拉；用户明确要求 review 不受交付点限制。
+- 测试与本地准备并行，不得阻塞 IMPLEMENT/本地 VERIFY。
+- 用户说“直接 PR / 继续 / 授权 / 快”时，停止可选 review、重复测试和低价值审计；这些表达只停止可选检查；push、创建或更新 PR、发布、外部消息等动作仍需针对具体动作和目标的明确授权，项目级规则优先。
+- 硬阻塞不是 review：已发现的密钥/个人数据泄露、真实配置或数据损坏、权限越界、授权缺失，必须停下汇报 Owner，即使用户说“继续/快点”也不能覆盖。硬阻塞是停止并汇报 Owner 的门禁，与下方子 agent 阻塞条件无关。
 - 只有三种情况可让子 agent 阻塞主线：确认安全泄露、确认真实数据破坏、下一步确实依赖其协议/API 结论；否则后台运行，晚到 blocker 另补 fix commit。
 
 ### 停止与交付规则
 
 - **根因先行**：先给根因再给流程；根因明确后立即执行，不重复确认已知事实。
-- **时间盒**：根因判断 ≤15 分钟、可运行修复 ≤30 分钟；超时停止试错并输出：事实 / 假设 / 已排除 / 阻塞 / 所需决策。
+- **时间盒**：根因判断 ≤15 分钟、可运行修复 ≤30 分钟；时间盒约束无状态探索和重复试错，不限制安装、构建、迁移等必要耗时操作。到期必须停止当前试错并输出：事实 / 假设 / 已排除 / 阻塞 / 所需决策；随后明确进入 BLOCKED、RETHINK 或新的有限时间盒，不得无状态续试。
 - **证据够了就停**：已通过检查不重跑；针对性测试 + 必要的 build/pack/扫描 + 一次状态确认即交付。
 - **已授权 PR 追加小修**：局部 diff → 针对性测试 → 敏感扫描 → commit → push → 一次状态确认；不重套 L3、不重跑冻结测试、不重新梳理 PR 全文。
 - **高危运行态动作**：计划阶段授权，授权包含动作、目标服务、影响范围、回滚方式、是否允许改真实数据。
@@ -135,5 +136,5 @@ DESIGN → PLAN → IMPLEMENT → VERIFY → TRIAL → DONE
 
 ## 机制层
 
-- portable policy 与 Runtime enforcement 分离；当前 DSH adapter 负责原子替换、单 writer、门禁和 Planner 接入。
-- DSH 具体链路、Windows troubleshooting、settings 暴露链路见 `adapters/dsh/` references；本 Skill 不复制平台细节。
+- portable policy 与 Runtime enforcement 分离；DSH adapter（仓库根目录 `adapters/dsh/`，不在本包内，按需取用）负责原子替换、单 writer、门禁和 Planner 接入。
+- DSH 具体链路、Windows troubleshooting、settings 暴露链路见仓库 `adapters/dsh/` references；本 Skill 不复制平台细节。

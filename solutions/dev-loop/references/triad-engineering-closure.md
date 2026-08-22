@@ -7,7 +7,7 @@ description: Human owner + Claude implementation + ChatGPT independent audit. Pr
 
 ## Purpose
 
-三方固定分工：
+三方固定分工（Claude/ChatGPT 为示例角色名，可按本地资源表替换实现者与审计者）：
 
 - **用户**：产品 Owner，决定目标、范围、取舍和发布
 - **Claude**：实现工程师，修改代码、运行测试、提交证据
